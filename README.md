@@ -41,6 +41,7 @@ I wanted the configured environment to consist of a few things:
     - popular packages to be installed (like uvicorn, fastapi, pytest)
 - Built-in IDE
 - Project structure to be created for developers
+- Cloning a desired ready git project to the environment
 
 I don't really knows how to work with terraform configuraton files, or bash script so I mainly worked with AI to create the template files that you see in this repo.
 <br>
