@@ -8,68 +8,51 @@ terraform {
 
 provider "coder" {}
 
-data "coder_workspace" "me" {}
-
-# -------------------------
-# Parameters (user inputs)
-# -------------------------
 variable "repo_url" {
   type        = string
-  description = "Git repository to clone into the workspace"
   default     = ""
+  description = "Git repo to clone into workspace"
 }
 
-variable "python_version" {
-  type        = string
-  default     = "3.11"
-}
-
-# -------------------------
-# Python Dev Agent
-# -------------------------
-resource "coder_agent" "python" {
+resource "coder_agent" "dev" {
   arch = "amd64"
   os   = "linux"
 
   startup_script = <<-EOT
     set -e
 
-    echo "Updating system..."
+    echo "Installing system dependencies..."
     sudo apt-get update -y
-    sudo apt-get install -y \
-      git curl build-essential \
-      python3 python3-pip python3-venv
+    sudo apt-get install -y git curl build-essential python3 python3-pip python3-venv
 
-    echo "Setting up workspace..."
+    echo "Installing Docker..."
+    curl -fsSL https://get.docker.com | sh
+    sudo usermod -aG docker coder || true
+    sudo dockerd > /tmp/dockerd.log 2>&1 &
+
+    sleep 5
+
+    echo "Preparing workspace..."
     mkdir -p ~/workspace
     cd ~/workspace
 
-    # Clone repo if provided
     if [ ! -z "${var.repo_url}" ]; then
-      echo "Cloning repo..."
       git clone ${var.repo_url} repo
       cd repo
     fi
 
-    echo "Creating virtual environment..."
+    echo "Setting up Python venv..."
     python3 -m venv .venv
     source .venv/bin/activate
 
-    echo "Upgrading pip..."
     pip install --upgrade pip
 
-    echo "Installing Python dev tools..."
     pip install \
-      fastapi \
-      uvicorn \
+      fastapi uvicorn \
       jupyterlab \
-      pytest \
-      black \
-      ruff \
-      mypy \
-      ipykernel
+      pytest black ruff mypy ipykernel
 
-    echo "Setup complete."
+    echo "Environment ready."
   EOT
 
   env = {
@@ -77,33 +60,24 @@ resource "coder_agent" "python" {
   }
 }
 
-# -------------------------
-# VS Code (Coder built-in)
-# -------------------------
 resource "coder_app" "vscode" {
-  agent_id     = coder_agent.python.id
+  agent_id     = coder_agent.dev.id
   slug         = "vscode"
   display_name = "VS Code"
   url          = "http://localhost:13337"
   subdomain    = true
 }
 
-# -------------------------
-# FastAPI App (example)
-# -------------------------
 resource "coder_app" "fastapi" {
-  agent_id     = coder_agent.python.id
+  agent_id     = coder_agent.dev.id
   slug         = "fastapi"
-  display_name = "FastAPI Server"
+  display_name = "FastAPI"
   url          = "http://localhost:8000"
   subdomain    = true
 }
 
-# -------------------------
-# JupyterLab App
-# -------------------------
 resource "coder_app" "jupyter" {
-  agent_id     = coder_agent.python.id
+  agent_id     = coder_agent.dev.id
   slug         = "jupyter"
   display_name = "JupyterLab"
   url          = "http://localhost:8888"
