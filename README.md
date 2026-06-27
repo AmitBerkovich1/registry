@@ -10,7 +10,7 @@ helm repo update
 ```
 <br>
 
-I did that then deploied the chart usibng ***Kind*** cluster and ***openlens*** <br>
+I did that then deploied the chart using ***Kind*** cluster and ***openlens*** <br>
 Then I did port-forward to view coder on my computer <br>
 At first I had a problem that the only page I could was the login page but I did't had a user to login with. <br>
 I tried to solve it in many ways after finally coming across a newer version of the chart which did not had that problem. <br>
@@ -37,7 +37,7 @@ I wanted the configured environment to consist of a few things:
     - cli
     - daemon
 - Python Development Environment
-    - .venn to be created automatically
+    - .venv to be created automatically
     - popular packages to be installed (like uvicorn, fastapi, pytest)
 - Built-in IDE
 - Project structure to be created for developers
